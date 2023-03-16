@@ -1,0 +1,35 @@
+{
+  "name": "mesto-express",
+  "version": "1.0.0",
+  "description": "mesto-express backend",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "lint": "npx eslint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Celtiss/express-mesto-gha.git"
+  },
+  "author": "Elena Temirbekova",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Celtiss/express-mesto-gha/issues"
+  },
+  "homepage": "https://github.com/Celtiss/express-mesto-gha#readme",
+  "devDependencies": {
+    "eslint": "^8.36.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-rallycoding": "^3.2.0",
+    "eslint-plugin-import": "^2.27.5",
+    "nodemon": "^2.0.21",
+    "webpack": "^5.76.1"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "mongoose": "^7.0.1"
+  }
+}
