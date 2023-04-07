@@ -26,22 +26,15 @@ module.exports.createCard = (req, res, next) => {
 
 module.exports.deleteCard = (req, res, next) => {
   const cardId = req.params.cardId;
-  if (cardId.length !== 24) {
-    next(new BadReqError(`Переданы некорректные данные при удалении карточки: ${err.message}`))
-  }
   Card.findById(cardId)
     .orFail(() => {
-      if (cardId.length === 24) {
         throw new NotFoundError(`Карточка с данным id не найдена:  ${cardId}`);
-      }
     })
     .then((card) => {
         if(card.owner == req.user._id) {
           Card.findByIdAndDelete(cardId)
           .orFail(() => {
-            if (cardId.length === 24) {
               throw new NotFoundError(`Карточка с данным id не найдена:  ${cardId}`);
-            }
           })
           .then(() => res.status(SUCCESS_CODE).send({ message: 'Карточка успешко удалена' }))
           .catch(next);
@@ -60,18 +53,10 @@ module.exports.likeCard = (req, res, next) => {
     { new: true },
   )
     .orFail(() => {
-      if (req.params.cardId.length === 24) {
         throw(new NotFoundError(`Карточка с данным id не найдена:  ${req.params.cardId}`));
-      }
     })
     .then(() => res.status(SUCCESS_CODE).send({ message: 'Карточка успешко лайкнута' }))
-    .catch((err) => {
-      if (req.params.cardId.length !== 24) {
-        next(new BadReqError(`Переданы некорректные данные для постановки лайка: ${err.message}`));
-      } else {
-        next(err);
-      }
-    });
+    .catch(next);
 };
 
 module.exports.dislikeCard = (req, res, next) => {
@@ -84,11 +69,5 @@ module.exports.dislikeCard = (req, res, next) => {
       throw(new NotFoundError(`Карточка с данным id не найдена:  ${req.params.cardId}`));
     })
     .then(() => res.status(SUCCESS_CODE).send({ message: 'Успешно убран лайк с карточки' }))
-    .catch((err) => {
-      if (req.params.cardId.length !== 24) {
-        next(new BadReqError(`Переданы некорректные данные для постановки лайка: ${err.message}`));
-      } else {
-        next(err);
-      }
-    });
+    .catch(next);
 };

@@ -11,7 +11,6 @@ module.exports = (req, res, next) => {
   let payload;
   try {
     payload = jwt.verify(token, 'super-strong-secret');
-    console.log(payload);
   }
   catch (err) {
     next(err);

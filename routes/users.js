@@ -5,6 +5,7 @@ const {
   getUsers, getUserById, getCurrentUser, updateUserInfo, updateUserAvatar
 } = require('../controllers/users');
 const { BadReqError } = require('../errors/not-found-errors');
+const urlRegExp = new RegExp(/(^(https?:\/\/)?(www\.)?[^\/\s]+\.[^\/\s]+(\/[^\/\s]*)*#?$)/);
 
 Router.get('/', getUsers);
 Router.get('/me', getCurrentUser);
@@ -27,6 +28,10 @@ Router.patch('/me', celebrate({
   }
 
 }), updateUserInfo);
-Router.patch('/me/avatar', updateUserAvatar);
+Router.patch('/me/avatar', celebrate({
+  [Segments.BODY]: {
+    avatar: Joi.string().regex(urlRegExp)
+  }
+}), updateUserAvatar);
 
 module.exports = Router;
