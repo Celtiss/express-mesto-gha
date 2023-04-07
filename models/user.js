@@ -1,27 +1,69 @@
 const { mongoose } = require('mongoose');
+const bcrypt = require('bcryptjs');
+const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    required: false,
+    default: 'Жак-Ив Кусто',
     minlength: 2,
     maxlength: 30,
   },
   about: {
     type: String,
-    required: true,
+    required: false,
+    default: 'Исследователь',
     minlength: 2,
     maxlength: 30,
   },
   avatar: {
     type: String,
+    required: false,
+    default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+  },
+  email: {
+    type: String,
+    unique: true,
     required: true,
+    validate: [validator.isEmail, "invalid email"],
+  },
+  password: {
+    type: String,
+    required: true,
+    // select: false
   },
 });
 
-userSchema.path('avatar').validate((val) => {
-  const urlRegex = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-/]))?/;
-  return urlRegex.test(val);
-}, 'Invalid URL.');
+ userSchema.path('avatar').validate((val) => {
+   const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9\-._~:/?#\[\]@!\$&'()*+,;=]+(#)?$/;
+   return urlRegex.test(val);
+ }, 'Invalid URL.');
 
-module.exports = mongoose.model('user', userSchema);
+userSchema.statics.findUserByCredentials = function (email, password) {
+  return this.findOne({email})
+  .then((user) => {
+    if(!user){
+      return Promise.reject(new Error('Неправильные почта или пароль'));
+    }
+    console.log(password, user.password);
+    return bcrypt.compare(password, user.password)
+    .then((matched) => {
+      if (!matched) {
+        return Promise.reject(new Error('Неправильные почта или пароль'));
+      }
+      return user;
+    })
+  })
+}
+
+userSchema.methods.toJSON = function () {
+  const data = this.toObject();
+  delete data['password'];
+  delete data['__v'];
+  return data;
+}
+
+const user = mongoose.model('user', userSchema);
+user.createIndexes();
+module.exports = user;

@@ -1,57 +1,91 @@
 const User = require('../models/user');
-
-const BADREQ_CODE = 400;
-const NOTFOUND_CODE = 404;
-const DEFAULT_CODE = 500;
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const SUCCESS_CODE = 200;
 
-module.exports.getUsers = (req, res) => {
-  User.find({})
-    .then((users) => res.status(SUCCESS_CODE).send({ data: users }))
-    .catch((err) => res.status(DEFAULT_CODE).send({ message: `На сервере произошла ошибка  ${err.message}` }));
+const { BadReqError, UnauthorizedError, NotFoundError, ConflictError } = require('../errors/not-found-errors');
+
+module.exports.login = (req, res, next) => {
+  const {email, password} = req.body;
+  return User.findUserByCredentials(email, password)
+  .then((user) => {
+    const token = jwt.sign({_id: user._id}, 'super-strong-secret', {expiresIn: '7d'});
+    res.cookie('token', token, { maxAge: 3600000 * 24 * 7, httpOnly: true })
+    .end();
+  })
+  .catch((err) => {next(new UnauthorizedError(`${err.message}`))});
 };
 
-module.exports.getUserById = (req, res) => {
-  User.findById(req.params.userId)
+// USERS
+module.exports.getUsers = (req, res, next) => {
+  User.find({})
+    .then((users) => res.status(SUCCESS_CODE).send({ data: users }))
+    .catch(next);
+};
+
+// USERS/ME
+module.exports.getCurrentUser = (req, res, next) => {
+  const userId = req.user;
+  if (userId.length !== 24) {
+    next(new BadReqError(`Введены некорректные данные при поиске пользователя с данным ID: ${userId}` ));
+  }
+  User.findById(userId)
     .orFail(() => {
-      if (req.params.userId.length === 24) {
-        res.status(NOTFOUND_CODE).send({ message: `Пользователь с данным id не найден:  ${req.params.userId}` });
+      if (userId.length !== 24) {
+        throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
       }
     })
     .then(((user) => res.status(SUCCESS_CODE).send({ data: user })))
-    .catch((err) => {
-      if (req.params.userId.length !== 24) {
-        res.status(BADREQ_CODE).send({ message: `Введены некорректные данные при создании нового пользователя: ${err.message}` });
-      } else {
-        res.status(DEFAULT_CODE).send({ message: `На сервере произошла ошибка  ${err.message}` });
+    .catch(next);
+}
+
+// USERS/:ID
+module.exports.getUserById = (req, res, next) => {
+  const userId = req.params.userId;
+  if (userId.length !== 24) {
+    next(new BadReqError(`Введены некорректные данные при поиске пользователя с данным ID: ${userId}` ));
+  }
+  User.findById(userId)
+    .orFail(() => {
+      if (userId.length === 24) {
+        throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
       }
-    });
+    })
+    .then(((user) => res.status(SUCCESS_CODE).send({ data: user })))
+    .catch(next);
 };
 
-module.exports.createNewUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.status(SUCCESS_CODE).send({ user }))
+// USERS
+module.exports.createNewUser = (req, res, next) => {
+  const { name, about, avatar, email, password } = req.body;
+  bcrypt.hash(password, 10)
+  .then((hash) => {
+    User.create({ name, about, avatar, email, password:hash, })
+    .then((user) => res.status(SUCCESS_CODE).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BADREQ_CODE).send({ message: `Введены некорректные данные при создании нового пользователя: ${err.message}` });
-      } else {
-        res.status(DEFAULT_CODE).send({ message: `На сервере произошла ошибка  ${err.message}` });
+        next(new BadReqError(`Введены некорректные данные при создании нового пользователя: ${err.message}`))
       }
+      if(err.code === 11000) {
+        next(new ConflictError(`Пользователь с данным email уже существует: ${err.message}`))
+      }
+      next(err);
     });
+  })
 };
 
-const updateUser = function (req, res, dataUser) {
+// // USERS/ME
+const updateUser = function (req, res, dataUser, next) {
   User.findByIdAndUpdate(req.user._id, dataUser, { new: true, runValidators: true })
     .orFail(() => {
-      res.status(NOTFOUND_CODE).send({ message: `Пользователь с данным id не найден:  ${req.user._id}` });
+      throw new NotFoundError(`Пользователь с данным id не найден:  ${req.user._id}`)
     })
     .then((user) => res.status(SUCCESS_CODE).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BADREQ_CODE).send({ message: `Введены некорректные данные при обновлении пользователя: ${err.message}` });
+        next(new BadReqError(`Введены некорректные данные при обновлении пользователя: ${err.message}`));
       } else {
-        res.status(DEFAULT_CODE).send({ message: `На сервере произошла ошибка  ${err.message}` });
+        next(err);
       }
     });
 };
