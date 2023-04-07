@@ -10,7 +10,7 @@ module.exports.login = (req, res, next) => {
   return User.findUserByCredentials(email, password)
   .then((user) => {
     const token = jwt.sign({_id: user._id}, 'super-strong-secret', {expiresIn: '7d'});
-    res.cookie('token', token, { maxAge: 3600000 * 24 * 7, httpOnly: true })
+    res.cookie('token', token, { maxAge: 3600000 * 24 * 7, httpOnly: true }).send({user})
     .end();
   })
   .catch((err) => {next(new UnauthorizedError(`${err.message}`))});
@@ -25,7 +25,8 @@ module.exports.getUsers = (req, res, next) => {
 
 // USERS/ME
 module.exports.getCurrentUser = (req, res, next) => {
-  const userId = req.user;
+  const userId = req.user._id;
+  console.log("ТОкен",userId);
   if (userId.length !== 24) {
     next(new BadReqError(`Введены некорректные данные при поиске пользователя с данным ID: ${userId}` ));
   }
@@ -42,14 +43,9 @@ module.exports.getCurrentUser = (req, res, next) => {
 // USERS/:ID
 module.exports.getUserById = (req, res, next) => {
   const userId = req.params.userId;
-  if (userId.length !== 24) {
-    next(new BadReqError(`Введены некорректные данные при поиске пользователя с данным ID: ${userId}` ));
-  }
   User.findById(userId)
     .orFail(() => {
-      if (userId.length === 24) {
         throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
-      }
     })
     .then(((user) => res.status(SUCCESS_CODE).send({ data: user })))
     .catch(next);

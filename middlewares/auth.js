@@ -4,7 +4,6 @@ const { unlock } = require('../routes/users');
 
 module.exports = (req, res, next) => {
   const token = req.cookies.token;
-  console.log(token);
   if(!token) {
     throw new UnauthorizedError('Необходима авторизация');
   }
