@@ -25,23 +25,22 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  const cardId = req.params.cardId;
+  const { cardId } = req.params;
   Card.findById(cardId)
     .orFail(() => {
-        throw new NotFoundError(`Карточка с данным id не найдена:  ${cardId}`);
+      throw new NotFoundError(`Карточка с данным id не найдена:  ${cardId}`);
     })
     .then((card) => {
-        if(card.owner == req.user._id) {
-          Card.findByIdAndDelete(cardId)
+      if (card.owner == req.user._id) {
+        Card.findByIdAndDelete(cardId)
           .orFail(() => {
-              throw new NotFoundError(`Карточка с данным id не найдена:  ${cardId}`);
+            throw new NotFoundError(`Карточка с данным id не найдена:  ${cardId}`);
           })
           .then(() => res.status(SUCCESS_CODE).send({ message: 'Карточка успешко удалена' }))
           .catch(next);
-        }
-        else{
-          throw new ForbiddenError('Нельзя удалять чужую карточку')
-        }
+      } else {
+        throw new ForbiddenError('Нельзя удалять чужую карточку');
+      }
     })
     .catch(next);
 };
@@ -53,7 +52,7 @@ module.exports.likeCard = (req, res, next) => {
     { new: true },
   )
     .orFail(() => {
-        throw(new NotFoundError(`Карточка с данным id не найдена:  ${req.params.cardId}`));
+      throw (new NotFoundError(`Карточка с данным id не найдена:  ${req.params.cardId}`));
     })
     .then(() => res.status(SUCCESS_CODE).send({ message: 'Карточка успешко лайкнута' }))
     .catch(next);
@@ -66,7 +65,7 @@ module.exports.dislikeCard = (req, res, next) => {
     { new: true },
   )
     .orFail(() => {
-      throw(new NotFoundError(`Карточка с данным id не найдена:  ${req.params.cardId}`));
+      throw (new NotFoundError(`Карточка с данным id не найдена:  ${req.params.cardId}`));
     })
     .then(() => res.status(SUCCESS_CODE).send({ message: 'Успешно убран лайк с карточки' }))
     .catch(next);

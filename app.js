@@ -1,16 +1,19 @@
 const express = require('express');
 const { mongoose } = require('mongoose');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const {Joi, Segments, celebrate, errors} = require('celebrate');
+const cookieParser = require( 'cookie-parser' );
+const {
+  Joi, Segments, celebrate, errors,
+} = require('celebrate');
 
 const { PORT = 3000, DB_PATH = 'mongodb://localhost:27017/mestodb' } = process.env;
 const users = require('./routes/users');
 const cards = require('./routes/cards');
-const {login, createNewUser} = require('./controllers/users');
+const { login, createNewUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const { NotFoundError } = require('./errors/not-found-errors');
-const urlRegExp = new RegExp(/(^(https?:\/\/)?(www\.)?[^\/\s]+\.[^\/\s]+(\/[^\/\s]*)*#?$)/);
+
+const pattern = /https?:\/\/(www.)?[a-z]+.[a-z]+[a-zA-Z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;=]+/;
 
 const app = express();
 
@@ -30,40 +33,39 @@ app.post('/signup', celebrate({
   [Segments.BODY]: {
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string().regex(urlRegExp),
+    avatar: Joi.string().regex(pattern),
     email: Joi.string().required().email(),
-    password: Joi.string().required()}
+    password: Joi.string().required(),
+  },
 }), createNewUser);
 
-//АВТОРИЗАЦИЯ
+// АВТОРИЗАЦИЯ
 app.post('/signin', celebrate({
   [Segments.BODY]: {
     email: Joi.string().required().email(),
-    password: Joi.string().required()
-  }
+    password: Joi.string().required(),
+  },
 }), login);
 
-//Защита роутов авторизацией
+// Защита роутов авторизацией
 app.use(auth);
 app.use('/users', users);
 app.use('/cards', cards);
-app.use('*', (req, res, next) => {
-  return next(new NotFoundError('Запрашиваемый ресурс не найден'));
-});
+app.use('*', (req, res, next) => next(new NotFoundError('Запрашиваемый ресурс не найден')));
 
-//ОБРАБОТКА ОШИБОК
+// ОБРАБОТКА ОШИБОК
 app.use(errors());
 
 app.use((err, req, res, next) => {
-  const {statusCode = 500, message} = err;
+  const { statusCode = 500, message } = err;
 
   res.status(statusCode)
-  .send({
-    message: statusCode===500
-    ?'На сервере произошла ошибка'
-    :message
-  });
-})
+    .send({
+      message: statusCode === 500
+        ? 'На сервере произошла ошибка'
+        : message,
+    });
+});
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);

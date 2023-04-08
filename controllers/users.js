@@ -1,19 +1,22 @@
-const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
+
 const SUCCESS_CODE = 200;
 
-const { BadReqError, UnauthorizedError, NotFoundError, ConflictError } = require('../errors/not-found-errors');
+const {
+  BadReqError, UnauthorizedError, NotFoundError, ConflictError,
+} = require('../errors/not-found-errors');
 
 module.exports.login = (req, res, next) => {
-  const {email, password} = req.body;
+  const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
-  .then((user) => {
-    const token = jwt.sign({_id: user._id}, 'super-strong-secret', {expiresIn: '7d'});
-    res.cookie('token', token, { maxAge: 3600000 * 24 * 7, httpOnly: true }).send({user})
-    .end();
-  })
-  .catch((err) => {next(new UnauthorizedError(`${err.message}`))});
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' });
+      res.cookie('token', token, { maxAge: 3600000 * 24 * 7, httpOnly: true }).send({ user })
+        .end();
+    })
+    .catch((err) => { next(new UnauthorizedError(`${err.message}`)); });
 };
 
 // USERS
@@ -26,9 +29,9 @@ module.exports.getUsers = (req, res, next) => {
 // USERS/ME
 module.exports.getCurrentUser = (req, res, next) => {
   const userId = req.user._id;
-  console.log("ТОкен",userId);
+  console.log('ТОкен', userId);
   if (userId.length !== 24) {
-    next(new BadReqError(`Введены некорректные данные при поиске пользователя с данным ID: ${userId}` ));
+    next(new BadReqError(`Введены некорректные данные при поиске пользователя с данным ID: ${userId}`));
   }
   User.findById(userId)
     .orFail(() => {
@@ -38,14 +41,14 @@ module.exports.getCurrentUser = (req, res, next) => {
     })
     .then(((user) => res.status(SUCCESS_CODE).send({ data: user })))
     .catch(next);
-}
+};
 
 // USERS/:ID
 module.exports.getUserById = (req, res, next) => {
-  const userId = req.params.userId;
+  const { userId } = req.params;
   User.findById(userId)
     .orFail(() => {
-        throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
+      throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
     })
     .then(((user) => res.status(SUCCESS_CODE).send({ data: user })))
     .catch(next);
@@ -53,28 +56,32 @@ module.exports.getUserById = (req, res, next) => {
 
 // USERS
 module.exports.createNewUser = (req, res, next) => {
-  const { name, about, avatar, email, password } = req.body;
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
   bcrypt.hash(password, 10)
-  .then((hash) => {
-    User.create({ name, about, avatar, email, password:hash, })
-    .then((user) => res.status(SUCCESS_CODE).send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new BadReqError(`Введены некорректные данные при создании нового пользователя: ${err.message}`))
-      }
-      if(err.code === 11000) {
-        next(new ConflictError(`Пользователь с данным email уже существует: ${err.message}`))
-      }
-      next(err);
+    .then((hash) => {
+      User.create({
+        name, about, avatar, email, password: hash,
+      })
+        .then((user) => res.status(SUCCESS_CODE).send({ data: user }))
+        .catch((err) => {
+          if (err.name === 'ValidationError') {
+            next(new BadReqError(`Введены некорректные данные при создании нового пользователя: ${err.message}`));
+          }
+          if (err.code === 11000) {
+            next(new ConflictError(`Пользователь с данным email уже существует: ${err.message}`));
+          }
+          next(err);
+        });
     });
-  })
 };
 
 // // USERS/ME
 const updateUser = function (req, res, dataUser, next) {
   User.findByIdAndUpdate(req.user._id, dataUser, { new: true, runValidators: true })
     .orFail(() => {
-      throw new NotFoundError(`Пользователь с данным id не найден:  ${req.user._id}`)
+      throw new NotFoundError(`Пользователь с данным id не найден:  ${req.user._id}`);
     })
     .then((user) => res.status(SUCCESS_CODE).send({ data: user }))
     .catch((err) => {

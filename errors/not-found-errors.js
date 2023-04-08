@@ -33,4 +33,6 @@ class ConflictError extends Error {
   }
 }
 
-module.exports = {BadReqError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError};
+module.exports = {
+  BadReqError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError,
+};

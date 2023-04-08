@@ -1,6 +1,5 @@
 const { mongoose } = require('mongoose');
 const bcrypt = require('bcryptjs');
-const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -26,43 +25,46 @@ const userSchema = new mongoose.Schema({
     type: String,
     unique: true,
     required: true,
-    validate: [validator.isEmail, "invalid email"],
   },
   password: {
     type: String,
     required: true,
-    // select: false
   },
 });
 
- userSchema.path('avatar').validate((val) => {
-   const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9\-._~:/?#\[\]@!\$&'()*+,;=]+(#)?$/;
-   return urlRegex.test(val);
- }, 'Invalid URL.');
+userSchema.path('avatar').validate((val) => {
+  const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9\-._~:/?#\[\]@!\$&'()*+,;=]+(#)?$/;
+  return urlRegex.test(val);
+}, 'Invalid URL.');
+
+userSchema.path('email').validate((val) => {
+  const urlRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
+  return urlRegex.test(val);
+}, 'Invalid email.');
 
 userSchema.statics.findUserByCredentials = function (email, password) {
-  return this.findOne({email})
-  .then((user) => {
-    if(!user){
-      return Promise.reject(new Error('Неправильные почта или пароль'));
-    }
-    console.log(password, user.password);
-    return bcrypt.compare(password, user.password)
-    .then((matched) => {
-      if (!matched) {
+  return this.findOne({ email })
+    .then((user) => {
+      if (!user) {
         return Promise.reject(new Error('Неправильные почта или пароль'));
       }
-      return user;
-    })
-  })
-}
+      console.log(password, user.password);
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            return Promise.reject(new Error('Неправильные почта или пароль'));
+          }
+          return user;
+        });
+    });
+};
 
 userSchema.methods.toJSON = function () {
   const data = this.toObject();
-  delete data['password'];
-  delete data['__v'];
+  delete data.password;
+  delete data.__v;
   return data;
-}
+};
 
 const user = mongoose.model('user', userSchema);
 user.createIndexes();
