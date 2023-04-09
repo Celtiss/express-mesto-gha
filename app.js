@@ -2,17 +2,12 @@ const express = require('express');
 const { mongoose } = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const routes = require('./routes/index');
 const {
-  Joi, Segments, celebrate, errors,
+  errors,
 } = require('celebrate');
 
 const { PORT = 3000, DB_PATH = 'mongodb://localhost:27017/mestodb' } = process.env;
-const users = require('./routes/users');
-const cards = require('./routes/cards');
-const { login, createNewUser } = require('./controllers/users');
-const auth = require('./middlewares/auth');
-const { NotFoundError } = require('./errors/NotFoundError');
-const pattern = require('./regex');
 
 const app = express();
 
@@ -26,35 +21,10 @@ mongoose.connect(DB_PATH, {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(routes);
 
-// РЕГИСТРАЦИЯ
-app.post('/signup', celebrate({
-  [Segments.BODY]: {
-    name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
-    avatar: Joi.string().regex(pattern),
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-  },
-}), createNewUser);
-
-// АВТОРИЗАЦИЯ
-app.post('/signin', celebrate({
-  [Segments.BODY]: {
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-  },
-}), login);
-
-// Защита роутов авторизацией
-app.use(auth);
-app.use('/users', users);
-app.use('/cards', cards);
-app.use('*', (req, res, next) => next(new NotFoundError('Запрашиваемый ресурс не найден')));
-
-// ОБРАБОТКА ОШИБОК
+// // ОБРАБОТКА ОШИБОК
 app.use(errors());
-
 app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
 
