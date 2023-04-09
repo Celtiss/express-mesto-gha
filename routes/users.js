@@ -1,6 +1,6 @@
 const Router = require('express').Router();
 const {
-  Joi, Segments, celebrate, errors,
+  Joi, Segments, celebrate,
 } = require('celebrate');
 const { default: mongoose } = require('mongoose');
 const {
@@ -24,7 +24,7 @@ Router.get('/:userId', celebrate({
 Router.patch('/me', celebrate({
   [Segments.BODY]: {
     name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30)
+    about: Joi.string().min(2).max(30),
   },
 
 }), updateUserInfo);

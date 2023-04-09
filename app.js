@@ -1,7 +1,7 @@
 const express = require('express');
 const { mongoose } = require('mongoose');
 const bodyParser = require('body-parser');
-const cookieParser = require( 'cookie-parser' );
+const cookieParser = require('cookie-parser');
 const {
   Joi, Segments, celebrate, errors,
 } = require('celebrate');
@@ -64,6 +64,7 @@ app.use((err, req, res, next) => {
         ? 'На сервере произошла ошибка'
         : message,
     });
+  next();
 });
 
 app.listen(PORT, () => {

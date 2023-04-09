@@ -29,7 +29,7 @@ module.exports.getCurrentUser = (req, res, next) => {
   const userId = req.user._id;
   User.findById(userId)
     .orFail(() => {
-        throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
+      throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
     })
     .then(((user) => res.send({ data: user })))
     .catch(next);
@@ -59,7 +59,7 @@ module.exports.createNewUser = (req, res, next) => {
         .then((user) => res.send({ data: user }))
         .catch((err) => {
           if (err.name === 'ValidationError') {
-            next(new BadReqError(`Введены некорректные данные при создании нового пользователя`));
+            next(new BadReqError('Введены некорректные данные при создании нового пользователя'));
           }
           if (err.code === 11000) {
             next(new ConflictError(`Пользователь с данным email уже существует: ${email}`));
@@ -78,7 +78,7 @@ const updateUser = function (req, res, dataUser, next) {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadReqError(`Введены некорректные данные при обновлении пользователя`));
+        next(new BadReqError('Введены некорректные данные при обновлении пользователя'));
       } else {
         next(err);
       }

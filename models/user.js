@@ -1,6 +1,7 @@
 const { mongoose } = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { UnauthorizedError } = require('../errors/UnauthorizedError');
+const pattern = require('../regex');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -33,10 +34,7 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.path('avatar').validate((val) => {
-  const urlRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9\-._~:/?#\[\]@!\$&'()*+,;=]+(#)?$/;
-  return urlRegex.test(val);
-}, 'Invalid URL.');
+userSchema.path('avatar').validate((val) => pattern.test(val), 'Invalid URL.');
 
 userSchema.path('email').validate((val) => {
   const urlRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
@@ -63,7 +61,6 @@ userSchema.statics.findUserByCredentials = function (email, password) {
 userSchema.methods.toJSON = function () {
   const data = this.toObject();
   delete data.password;
-  delete data.__v;
   return data;
 };
 

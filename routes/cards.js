@@ -1,7 +1,7 @@
 const Router = require('express').Router();
 const { mongoose } = require('mongoose');
 const {
-  Joi, Segments, celebrate, errors,
+  Joi, Segments, celebrate,
 } = require('celebrate');
 const {
   getCards, createCard, deleteCard, likeCard, dislikeCard,
