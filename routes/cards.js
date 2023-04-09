@@ -6,14 +6,15 @@ const {
 const {
   getCards, createCard, deleteCard, likeCard, dislikeCard,
 } = require('../controllers/cards');
-
-const urlRegExp = new RegExp(/(^(https?:\/\/)?(www\.)?[^\/\s]+\.[^\/\s]+(\/[^\/\s]*)*#?$)/);
+const { BadReqError } = require('../errors/BadReqError');
+// const urlRegExp = new RegExp(/(^(https?:\/\/)?(www\.)?[^\/\s]+\.[^\/\s]+(\/[^\/\s]*)*#?$)/);
+const pattern = require('../regex');
 
 Router.get('/', getCards);
 Router.post('/', celebrate({
   [Segments.BODY]: {
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required().regex(urlRegExp),
+    link: Joi.string().required().regex(pattern),
   },
 }), createCard);
 Router.delete('/:cardId', celebrate({

@@ -11,9 +11,8 @@ const users = require('./routes/users');
 const cards = require('./routes/cards');
 const { login, createNewUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-const { NotFoundError } = require('./errors/not-found-errors');
-
-const pattern = /https?:\/\/(www.)?[a-z]+.[a-z]+[a-zA-Z0-9\-\._~:\/\?#\[\]@!$&'\(\)\*\+,;=]+/;
+const { NotFoundError } = require('./errors/NotFoundError');
+const pattern = require('./regex');
 
 const app = express();
 

@@ -1,11 +1,12 @@
 const Card = require('../models/card');
 
-const SUCCESS_CODE = 200;
-const { BadReqError, ForbiddenError, NotFoundError } = require('../errors/not-found-errors');
+const { BadReqError } = require('../errors/BadReqError');
+const { ForbiddenError } = require('../errors/ForbiddenError');
+const { NotFoundError } = require('../errors/NotFoundError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
-    .then((cards) => res.status(SUCCESS_CODE).send({ data: cards }))
+    .then((cards) => res.send({ data: cards }))
     .catch(next);
 };
 
@@ -14,10 +15,10 @@ module.exports.createCard = (req, res, next) => {
   const owner = req.user;
   console.log(owner);
   Card.create({ name, link, owner })
-    .then((card) => res.status(SUCCESS_CODE).send({ data: card }))
+    .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadReqError(`Введены некорректные данные при создании новой карточки: ${err.message}`));
+        next(new BadReqError(`Введены некорректные данные при создании новой карточки`));
       } else {
         next(err);
       }
@@ -36,7 +37,7 @@ module.exports.deleteCard = (req, res, next) => {
           .orFail(() => {
             throw new NotFoundError(`Карточка с данным id не найдена:  ${cardId}`);
           })
-          .then(() => res.status(SUCCESS_CODE).send({ message: 'Карточка успешко удалена' }))
+          .then(() => res.send({ message: 'Карточка успешко удалена' }))
           .catch(next);
       } else {
         throw new ForbiddenError('Нельзя удалять чужую карточку');
@@ -54,7 +55,7 @@ module.exports.likeCard = (req, res, next) => {
     .orFail(() => {
       throw (new NotFoundError(`Карточка с данным id не найдена:  ${req.params.cardId}`));
     })
-    .then(() => res.status(SUCCESS_CODE).send({ message: 'Карточка успешко лайкнута' }))
+    .then(() => res.send({ message: 'Карточка успешко лайкнута' }))
     .catch(next);
 };
 
@@ -67,6 +68,6 @@ module.exports.dislikeCard = (req, res, next) => {
     .orFail(() => {
       throw (new NotFoundError(`Карточка с данным id не найдена:  ${req.params.cardId}`));
     })
-    .then(() => res.status(SUCCESS_CODE).send({ message: 'Успешно убран лайк с карточки' }))
+    .then(() => res.send({ message: 'Успешно убран лайк с карточки' }))
     .catch(next);
 };

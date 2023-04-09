@@ -6,9 +6,8 @@ const { default: mongoose } = require('mongoose');
 const {
   getUsers, getUserById, getCurrentUser, updateUserInfo, updateUserAvatar,
 } = require('../controllers/users');
-const { BadReqError } = require('../errors/not-found-errors');
-
-const urlRegExp = new RegExp(/(^(https?:\/\/)?(www\.)?[^\/\s]+\.[^\/\s]+(\/[^\/\s]*)*#?$)/);
+const { BadReqError } = require('../errors/BadReqError');
+const pattern = require('../regex');
 
 Router.get('/', getUsers);
 Router.get('/me', getCurrentUser);
@@ -25,15 +24,13 @@ Router.get('/:userId', celebrate({
 Router.patch('/me', celebrate({
   [Segments.BODY]: {
     name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
-    email: Joi.string().email(),
-    password: Joi.string(),
+    about: Joi.string().min(2).max(30)
   },
 
 }), updateUserInfo);
 Router.patch('/me/avatar', celebrate({
   [Segments.BODY]: {
-    avatar: Joi.string().regex(urlRegExp),
+    avatar: Joi.string().regex(pattern),
   },
 }), updateUserAvatar);
 

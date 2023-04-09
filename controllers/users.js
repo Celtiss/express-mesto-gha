@@ -2,11 +2,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const SUCCESS_CODE = 200;
-
-const {
-  BadReqError, UnauthorizedError, NotFoundError, ConflictError,
-} = require('../errors/not-found-errors');
+const { BadReqError } = require('../errors/BadReqError');
+const { NotFoundError } = require('../errors/NotFoundError');
+const { ConflictError } = require('../errors/ConflictError');
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
@@ -16,30 +14,24 @@ module.exports.login = (req, res, next) => {
       res.cookie('token', token, { maxAge: 3600000 * 24 * 7, httpOnly: true }).send({ user })
         .end();
     })
-    .catch((err) => { next(new UnauthorizedError(`${err.message}`)); });
+    .catch(next);
 };
 
 // USERS
 module.exports.getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.status(SUCCESS_CODE).send({ data: users }))
+    .then((users) => res.send({ data: users }))
     .catch(next);
 };
 
 // USERS/ME
 module.exports.getCurrentUser = (req, res, next) => {
   const userId = req.user._id;
-  console.log('ТОкен', userId);
-  if (userId.length !== 24) {
-    next(new BadReqError(`Введены некорректные данные при поиске пользователя с данным ID: ${userId}`));
-  }
   User.findById(userId)
     .orFail(() => {
-      if (userId.length !== 24) {
         throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
-      }
     })
-    .then(((user) => res.status(SUCCESS_CODE).send({ data: user })))
+    .then(((user) => res.send({ data: user })))
     .catch(next);
 };
 
@@ -50,7 +42,7 @@ module.exports.getUserById = (req, res, next) => {
     .orFail(() => {
       throw new NotFoundError(`Пользователь с данным id не найден:  ${userId}`);
     })
-    .then(((user) => res.status(SUCCESS_CODE).send({ data: user })))
+    .then(((user) => res.send({ data: user })))
     .catch(next);
 };
 
@@ -64,13 +56,13 @@ module.exports.createNewUser = (req, res, next) => {
       User.create({
         name, about, avatar, email, password: hash,
       })
-        .then((user) => res.status(SUCCESS_CODE).send({ data: user }))
+        .then((user) => res.send({ data: user }))
         .catch((err) => {
           if (err.name === 'ValidationError') {
-            next(new BadReqError(`Введены некорректные данные при создании нового пользователя: ${err.message}`));
+            next(new BadReqError(`Введены некорректные данные при создании нового пользователя`));
           }
           if (err.code === 11000) {
-            next(new ConflictError(`Пользователь с данным email уже существует: ${err.message}`));
+            next(new ConflictError(`Пользователь с данным email уже существует: ${email}`));
           }
           next(err);
         });
@@ -83,10 +75,10 @@ const updateUser = function (req, res, dataUser, next) {
     .orFail(() => {
       throw new NotFoundError(`Пользователь с данным id не найден:  ${req.user._id}`);
     })
-    .then((user) => res.status(SUCCESS_CODE).send({ data: user }))
+    .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadReqError(`Введены некорректные данные при обновлении пользователя: ${err.message}`));
+        next(new BadReqError(`Введены некорректные данные при обновлении пользователя`));
       } else {
         next(err);
       }
