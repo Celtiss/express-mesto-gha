@@ -30,6 +30,9 @@ Router.post('/signin', celebrate({
 
 // Защита роутов авторизацией
 Router.use(auth);
+Router.get('/signout', (req, res) => {
+  res.clearCookie('jwt').send({ message: 'Выход' });
+});
 Router.use('/users', users);
 Router.use('/cards', cards);
 Router.use('*', (req, res, next) => next(new NotFoundError('Запрашиваемый ресурс не найден')));
