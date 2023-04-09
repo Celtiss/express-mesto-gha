@@ -66,7 +66,8 @@ module.exports.createNewUser = (req, res, next) => {
           }
           next(err);
         });
-    });
+    })
+    .catch(next);
 };
 
 // // USERS/ME
