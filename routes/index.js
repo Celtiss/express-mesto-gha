@@ -2,6 +2,7 @@ const Router = require('express').Router();
 const {
   Joi, Segments, celebrate,
 } = require('celebrate');
+
 const users = require('./users');
 const cards = require('./cards');
 const pattern = require('../regex');
